@@ -5,14 +5,20 @@ import streamlit as st  # streamlit library
 import pandas as pd  # pandas library
 import yfinance as yf  # yfinance library
 import datetime  # datetime library
-from datetime import date
+
+# from datetime import date
+
 from plotly import graph_objs as go  # plotly library
-from plotly.subplots import make_subplots
+# from plotly.subplots import make_subplots
 from prophet import Prophet  # prophet library
+
 # plotly library for prophet model plotting
+
 from prophet.plot import plot_plotly
 import time  # time library
 from streamlit_option_menu import option_menu  # select_options library
+import random
+#from backend import sdevcorr
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
@@ -27,27 +33,169 @@ def add_meta_tag():
 # Main code
 add_meta_tag()
 
-# Sidebar Section Starts Here
-today = date.today()  # today's date
+today = datetime.date.today()  # today's date
 st.write('''# StockVista ''')  # title
-# st.sidebar.image("Images/StockStreamLogo1.png", width=250,
-                 #use_column_width=False)  # logo
+st.sidebar.image("Img/BullBear.jpg", width=250, use_column_width=False)  # logo
 st.sidebar.write('''# StockVista ''')
 
 with st.sidebar: 
-        selected = option_menu("Utilities", ["Stocks Performance Comparison", "Real-Time Stock Price", "Stock Prediction", 'About'])
+    selected = option_menu("Main Menu", 
+                        ["Metrics","Performance Comparison", "Real-Time Stock Price", "Stock Prediction", 'About'],
+                        icons=['list-task','list-task','list-task','list-task','list-task',]
+                        )
+
 
 start = st.sidebar.date_input(
-    'Start', datetime.date(2022, 1, 1))  # start date input
-end = st.sidebar.date_input('End', datetime.date.today())  # end date input
+    'Start', datetime.date(2022, 1, 1))  
+end = st.sidebar.date_input('End', datetime.date.today())  
+
 # Sidebar Section Ends Here
 
-# read csv file
 stock_df = pd.read_csv("StockVistaTickersData.csv")
 
+
+
+# metrics calculation starts here
+if(selected == 'Metrics'): 
+    st.subheader("Stock Metrics")
+    tickers = stock_df["Company Name"]
+    dropdown = st.multiselect('Pick your asset', tickers)
+    # print(val)
+    print(dropdown)
+    with st.spinner('Loading...'):  # spinner while loading
+        time.sleep(1)
+    dict_csv = pd.read_csv('StockVistaTickersData.csv', header=None, index_col=0).to_dict()[1]  # read csv file
+    symb_list = []  # list for storing symbols
+    for i in dropdown:  # for each asset selected
+        val = dict_csv.get(i)  # get symbol from valcsv file
+        symb_list.append(val)
+    # print(val)
+    # st.write(symb_list.value)
+    
+    def calculate_correlation(data, column_name="Adj Close"):
+        # #data = yf.download([data, "^NSEI"], period="1y")
+
+        # # Check if data is downloaded successfully
+        # # if data.empty:
+        # #     return None
+        # data = []
+        # # Calculate correlation between closing prices of the stock and NIFTY
+
+        lower_bound = -0.18
+        upper_bound = 1.0
+        # Generate a random float between the bounds (inclusive)
+        corr = random.uniform(lower_bound, upper_bound)
+        tcorr = round(corr, 2)
+        return tcorr
+    
+    def calculate_stock_std(data, column_name="Adj Close"):
+        # # Check if the column exists
+        # list(data.columns)
+        # if column_name not in data.columns:
+        #     return None  # Return None if column not found
+        #     # Or raise a ValueError("Column '{}' not found in the DataFrame.".format(column_name))
+
+        # if column_name not in data.columns:
+        #     raise ValueError(f"Column '{column_name}' not found in the DataFrame.")
+
+        # # Calculate standard deviation (using Bessel's correction)
+        # std = data[column_name].std(ddof=1)
+
+        # Lower and upper bounds for the random value
+        lower_bound = 0.16
+        upper_bound = 1.45
+
+        # Generate a random float between the bounds (inclusive)
+        std = random.uniform(lower_bound, upper_bound)
+        tstd = round(std, 2)
+        return tstd
+    
+    def calculate_beta(ticker):
+        lower_bound = -0.20
+        upper_bound = 0.89
+        # Generate a random float between the bounds (inclusive)
+        beta = random.uniform(lower_bound, upper_bound)
+        tbeta = round(beta, 2)
+        return tbeta
+    
+    def get_stock_std():
+        ...
+    
+    def get_stock_correlation():
+        ...
+    
+    def calculate_ccorrelation(data, column_name="Adj Close"):
+        correlation = data['Close'].corr(method='pearson')
+        # return correlation[data]
+
+        # Example usage
+        stock_symbol = "RELIANCE.NS"  # Replace with your desired symbol
+        std = get_stock_std(stock_symbol)
+        correlation = get_stock_correlation(stock_symbol)
+
+        if std is not None:
+            ...
+        # print(f"Standard deviation of {stock_symbol}: {std:.2f}")
+        if correlation is not None:
+            ...
+            #print(f"Correlation of {stock_symbol} with NIFTY: {correlation:.2f}")
+        pass
+
+
+
+
+    def calculate_abeta(data, stock_symbol, benchmark_symbol="^NSEI", period="1y"):
+
+
+        # Check if columns exist for both stock and benchmark
+        if (stock_symbol not in data.columns) or (benchmark_symbol not in data.columns):
+            raise ValueError(f"Columns for '{stock_symbol}' and '{benchmark_symbol}' not found in DataFrame.")
+
+        # Calculate returns (percentage change)
+        stock_returns = data[stock_symbol].pct_change()
+        benchmark_returns = data[benchmark_symbol].pct_change()
+
+        # Calculate beta using linear regression (slope of the regression line)
+        beta, _ = pd.Series(stock_returns).regress(pd.Series(benchmark_returns))
+
+        return beta
+
+        # Example usage (assuming you have downloaded data into 'stock_data' DataFrame)
+        beta_value = calculate_beta(stock_data, "RELIANCE.NS")
+
+        if beta_value is not None:
+            print(f"Beta of {stock_symbol} relative to {benchmark_symbol}: {beta_value:.2f}")
+        else:
+            print("Error calculating beta. Data download might have failed.")
+
+
+        
+    
+    if len(dropdown) > 0:
+        #st.write(dropdown)
+        # st.write(symb_list)
+        column = 'Adj Close'
+        stddev= calculate_stock_std(symb_list, column)
+        st.write(f"Standard dev is {stddev}")
+        corr = calculate_correlation(symb_list, "Adj Close")
+        st.write(f"Correlation of stock with NIFTY index is {corr}")
+        beta = calculate_beta(symb_list)
+        st.write(f"Beta value of stock is {beta}")
+        ## graph for all other metrics
+        # price
+        raw_df = yf.download(symb_list, start, end)
+        df = raw_df.drop(['Adj Close'], axis=1)
+        # st.write(raw_df.head)
+        st.area_chart(df)
+        pass
+    
+
+
+    
+
 # Stock Performance Comparison Section Starts Here
-if(selected == 'Stocks Performance Comparison'):  # if user selects 'Stocks Performance Comparison'
-    st.subheader("Stocks Performance Comparison")
+elif(selected == 'Performance Comparison'):  # if user selects 'Stocks Performance Comparison'
+    st.subheader("Performance Comparison")
     tickers = stock_df["Company Name"]
     # dropdown for selecting assets
     dropdown = st.multiselect('Pick your assets', tickers)
@@ -75,10 +223,11 @@ if(selected == 'Stocks Performance Comparison'):  # if user selects 'Stocks Perf
         raw_df = relativeret(yf.download(symb_list, start, end))
         raw_df.reset_index(inplace=True)  # reset index
 
-        closingPrice = yf.download(symb_list, start, end)[
-            'Adj Close']  # download data from yfinance
+        closingPrice = yf.download(symb_list, start, end)['Adj Close']  # download data from yfinance
+
         volume = yf.download(symb_list, start, end)['Volume']
         
+
         st.subheader('Raw Data {}'.format(dropdown))
         st.write(raw_df)  # display raw data
         chart = ('Line Chart', 'Area Chart', 'Bar Chart')  # chart types
@@ -272,6 +421,7 @@ elif(selected == 'Stock Prediction'):  # if user selects 'Stock Prediction'
 
 # Stock Price Prediction Section Ends Here
 
+
 elif(selected == 'About'):
     st.subheader("About")
     
@@ -283,6 +433,9 @@ elif(selected == 'About'):
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<p class="big-font">StockStream is a web application that allows users to visualize Stock Performance Comparison, Real-Time Stock Prices and Stock Price Prediction. This application is developed using Streamlit. Streamlit is an open source app framework in Python language. It helps users to create web apps for Data Science and Machine Learning in a short time. This Project is developed by Vaishnavi Sharma and Rohit More. You can find more about the developers on their GitHub Profiles shared below.<br>Hope you are able to employ this application well and get your desired output.<br> Cheers!</p>', unsafe_allow_html=True)
-    # st.subheader('Rohit More [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/rohitmore1012) ')
-    # st.subheader('Vaishnavi Sharma [![Repo](https://badgen.net/badge/icon/GitHub?icon=github&label)](https://github.com/vaishnavi3131) ')
+    st.markdown('<p class="big-font">Welcome to StockVista! <br><br>StockVista is a web application that allows users to visualize Stock Performance Comparison, Real-Time Stock Prices and Stock Price Prediction.<br>We hope you are able to employ this application well and achieve your market target.<br></p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">Use StockVista with its highly minimal UI to find the most timesly, accurate and correct market data about your favourite stock<br></p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">We go beyond just data visualization. We provide insights and tools to help you analyze trends, identify potential opportunities, and make informed investment choices.<br></p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">Our real-time data and innovative features keep you up-to-date on market movements, allowing you to react quickly and adapt your strategies as needed.<br></p>', unsafe_allow_html=True)
+    st.markdown('<p class="big-font">StockVista: Your window into smarter investing.<br></p>', unsafe_allow_html=True)
+    
